@@ -10,3 +10,5 @@ wheels/
 .venv
 .env
 __pycache__
+
+Codebase.txt
