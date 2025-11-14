@@ -1,0 +1,16 @@
+langchain
+langchain-community
+langchain-core
+langgraph
+databricks-langchain
+fastmcp
+databricks-sdk
+gitpython
+requests
+python-dotenv
+pydantic
+httpx
+pytest
+orjson
+python-dateutil
+tenacity

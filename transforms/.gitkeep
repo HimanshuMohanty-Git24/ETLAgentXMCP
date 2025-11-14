@@ -1,0 +1,11 @@
+# Configure git if not already done
+git config --global user.name "Himanshu Mohanty"
+git config --global user.email "codehimanshu24@gmail.com"
+
+# Test git push access
+echo "# Test" >> README.md
+git add README.md
+git commit -m "test commit"
+git push origin main
+
+# If successful, you're ready!

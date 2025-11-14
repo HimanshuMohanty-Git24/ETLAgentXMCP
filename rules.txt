@@ -1,0 +1,72 @@
+Bronze Layer (Raw Data Ingestion)
+Ingest data as-is from source (e.g., samples.accuweather.forecast_daily_calendar_imperial).
+
+Add audit metadata columns:
+
+ingestion_timestamp (current timestamp).
+
+source_file (source data identifier).
+
+row_id (unique monotonically increasing ID).
+
+Store data in Delta Lake format with Change Data Feed enabled.
+
+No data cleansing or transformation applied; preserve raw data.
+
+Silver Layer (Cleaned & Validated Data)
+Remove exact duplicate records based on all columns.
+
+Convert data types appropriately (e.g., date columns to DATE type; numeric columns cast to DOUBLE).
+
+Trim whitespace and standardize text case for string columns.
+
+Remove records with null or missing critical values such as forecast_date, city_name, or country_code.
+
+Normalize country codes to uppercase ISO 3166-1 alpha-2 standard.
+
+Add data quality flag columns:
+
+is_valid_record (BOOLEAN flag indicating record validity).
+
+data_quality_score (numeric score between 0 and 1).
+
+Filter out records with data_quality_score below 0.7.
+
+Partition tables by date (year-month) to optimize query performance.
+
+Gold Layer (Business-Ready Aggregations)
+Aggregate daily weather metrics by city and country.
+
+Calculate derived metrics such as comfort_index (weighted average of temperature, humidity, visibility).
+
+Create dimension tables (e.g., dim_location) capturing city, country, latitude, longitude.
+
+Create fact tables (e.g., fact_daily_weather) linking to dimensions with surrogate keys.
+
+Partition Gold tables by year and month for query optimization.
+
+Apply Z-order clustering on frequently filtered columns like city_name and forecast_date.
+
+Provide aggregated views for weekly and monthly weather trends.
+
+Data Quality Checks (Applicable at All Layers)
+Temperature must range between -50°C and 60°C.
+
+Humidity values between 0% and 100%.
+
+Latitude between -90 and 90.
+
+Longitude between -180 and 180.
+
+Wind speed and precipitation values must be zero or positive.
+
+Flag records with outliers beyond 3 standard deviations.
+
+Business Logic Rules
+For missing temperature values, impute using moving average of previous 3 days.
+
+Classify weather conditions into categories (Clear, Cloudy, Rainy, Stormy, Snowy) based on cloud cover and precipitation.
+
+Calculate heat index only when temperature is above 27°C.
+
+Mark data older than 2 years as archived for compliance purposes.
