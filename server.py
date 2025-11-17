@@ -44,8 +44,7 @@ from typing import Optional
 # Initialize MCP server
 mcp = FastMCP(
     name="Medallion ETL with Databricks Claude",
-    version="3.0.0",
-    description="Multi-layer Medallion ETL system using Databricks-hosted Claude Sonnet 4.5"
+    version="3.0.0"
 )
 
 

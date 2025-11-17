@@ -308,3 +308,86 @@ def generate_lineage_graph(table_name: str) -> Dict[str, Any]:
             "table_name": table_name,
             "error": str(e)
         }
+
+@tool
+def generate_transformation_recommendations(
+    source_context: Dict[str, Any],
+    target_layer: str,
+    rules: str
+) -> str:
+    """
+    Generate human-readable recommendations for the next layer transformation.
+
+    This is a lightweight, non-LLM helper that inspects the analysis
+    from `analyze_layer_output` and suggests what the next layer should do.
+
+    Args:
+        source_context: Output dictionary from analyze_layer_output()
+                        {
+                          "schema": {...},
+                          "row_count": int,
+                          "data_quality": {...},
+                          ...
+                        }
+        target_layer:   "bronze" | "silver" | "gold"
+        rules:          The raw contents of rules.txt (business rules)
+
+    Returns:
+        A multi-line string of bullet-point recommendations that the planner
+        agent can include in its prompt.
+    """
+    recommendations: List[str] = []
+
+    # Basic safety
+    if not isinstance(source_context, dict):
+        return "- No context available (source_context is not a dict)"
+
+    dq = source_context.get("data_quality", {})
+    row_count = source_context.get("row_count", 0)
+    completeness = dq.get("completeness_ratio", 1.0)
+    records_with_nulls = dq.get("records_with_nulls", 0)
+
+    recommendations.append(f"- Source has ~{row_count:,} rows with completeness ~{round(completeness*100, 1)}%.")
+
+    if records_with_nulls > 0:
+        recommendations.append(f"- There are {records_with_nulls:,} records with at least one NULL value.")
+        recommendations.append("- Consider null-handling strategies (drop, impute, or flag).")
+
+    # Schema-driven hints
+    schema_info = source_context.get("schema", {})
+    columns = schema_info.get("columns", [])
+    column_count = schema_info.get("column_count", len(columns))
+
+    recommendations.append(f"- The table has {column_count} columns; focus on the most important ones first.")
+
+    # Layer-specific guidance
+    target_layer_lower = target_layer.lower()
+
+    if target_layer_lower == "silver":
+        recommendations.extend([
+            "- Silver layer should focus on cleaning, deduplication, and standardization.",
+            "- Apply data quality rules from rules.txt for null thresholds, valid ranges, and type casting.",
+            "- Add quality flags and scores to identify problematic records."
+        ])
+    elif target_layer_lower == "gold":
+        recommendations.extend([
+            "- Gold layer should focus on aggregations and business KPIs.",
+            "- Use cleaned Silver data to build fact/dimension tables.",
+            "- Align with business metrics defined in rules.txt (comfort_index, severity scores, etc.)."
+        ])
+    elif target_layer_lower == "bronze":
+        recommendations.extend([
+            "- Bronze layer should ingest raw data with minimal transformation.",
+            "- Ensure audit columns (ingestion_timestamp, source_file, row_id) are added.",
+            "- Enable Change Data Feed and Delta properties as per rules.txt."
+        ])
+    else:
+        recommendations.append(f"- Unknown target layer '{target_layer}'; defaulting to generic cleanup.")
+
+    # Simple rule-based nudge from rules.txt
+    if "DATA_QUALITY_RULES" in rules:
+        recommendations.append("- DATA_QUALITY_RULES section found in rules.txt; enforce those checks in this layer.")
+    if "GOLD_RULES" in rules and target_layer_lower == "gold":
+        recommendations.append("- GOLD_RULES found in rules.txt; ensure KPIs and aggregations follow those specs.")
+
+    return "\n".join(recommendations)
