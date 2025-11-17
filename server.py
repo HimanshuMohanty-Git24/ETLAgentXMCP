@@ -29,10 +29,10 @@ required_vars = [
 
 missing_vars = [var for var in required_vars if not os.getenv(var)]
 if missing_vars:
-    print("❌ Missing required environment variables:")
+    print("Missing required environment variables:")
     for var in missing_vars:
         print(f"   - {var}")
-    print("\n💡 Please check your .env file and ensure all variables are set.")
+    print("\nPlease check your .env file and ensure all variables are set.")
     sys.exit(1)
 
 from fastmcp import FastMCP, Context
@@ -137,16 +137,16 @@ async def run_full_medallion_pipeline(
         initial_state["transformation_rules"] = "# Default transformation rules"
     
     if ctx:
-        await ctx.info(f"🚀 Starting full Medallion pipeline (Bronze → Silver → Gold)")
-        await ctx.info(f"📊 Source: {source_table}")
-        await ctx.info(f"🤖 LLM: Databricks {os.getenv('DATABRICKS_MODEL_ENDPOINT')}")
+        await ctx.info(f"Starting full Medallion pipeline (Bronze -> Silver -> Gold)")
+        await ctx.info(f"Source: {source_table}")
+        await ctx.info(f"LLM: Databricks {os.getenv('DATABRICKS_MODEL_ENDPOINT')}")
     
     print("\n" + "="*70)
-    print("🏗️  MEDALLION ETL PIPELINE STARTING")
+    print("MEDALLION ETL PIPELINE STARTING")
     print("="*70)
-    print(f"📊 Source: {source_table}")
-    print(f"💬 Request: {user_query}")
-    print(f"🤖 LLM: {os.getenv('DATABRICKS_MODEL_ENDPOINT')}")
+    print(f"Source: {source_table}")
+    print(f"Request: {user_query}")
+    print(f"LLM: {os.getenv('DATABRICKS_MODEL_ENDPOINT')}")
     print("="*70 + "\n")
     
     # Execute multi-layer workflow
@@ -155,15 +155,15 @@ async def run_full_medallion_pipeline(
         final_state["pipeline_end_time"] = datetime.now().isoformat()
         
         if ctx:
-            await ctx.info(f"✓ Pipeline completed: {len(final_state['layers_completed'])} layers processed")
+            await ctx.info(f"Pipeline completed: {len(final_state['layers_completed'])} layers processed")
     
     except Exception as e:
         error_msg = f"Pipeline execution failed: {str(e)}"
-        print(f"\n❌ {error_msg}\n")
+        print(f"\n{error_msg}\n")
         if ctx:
             await ctx.error(error_msg)
         
-        return f"""# ❌ Pipeline Execution Failed
+        return f"""# Pipeline Execution Failed
 
 Error: {str(e)}
 
@@ -180,7 +180,7 @@ See logs for detailed error information.
     summary = _format_pipeline_summary(final_state)
     
     print("\n" + "="*70)
-    print("✓ PIPELINE EXECUTION COMPLETE")
+    print("PIPELINE EXECUTION COMPLETE")
     print("="*70 + "\n")
     
     return summary
@@ -209,11 +209,11 @@ async def check_transformation_status(pr_number: int) -> str:
     return f"""# Transformation Status: PR #{pr_number}
 
 **State**: {status.get('state', 'unknown').upper()}
-**Merged**: {'✅ Yes' if status.get('merged') else '❌ Not yet'}
+**Merged**: {'Yes' if status.get('merged') else 'Not yet'}
 **Mergeable**: {status.get('mergeable', 'unknown')}
 **URL**: {status.get('url', 'N/A')}
 
-{'✅ Code has been merged and executed!' if status.get('merged') else '⏳ Awaiting review and merge. Code will execute automatically after merge.'}
+{'Code has been merged and executed!' if status.get('merged') else 'Awaiting review and merge. Code will execute automatically after merge.'}
 """
 
 
@@ -237,11 +237,11 @@ async def view_transformation_rules() -> str:
 {rules}
 
 ---
-**💡 Edit rules.txt to modify transformation logic system-wide**
-**🔄 Changes take effect on next pipeline execution**
+**Edit rules.txt to modify transformation logic system-wide**
+**Changes take effect on next pipeline execution**
 """
     except FileNotFoundError:
-        return "❌ rules.txt not found. Please create this file in the project root."
+        return "rules.txt not found. Please create this file in the project root."
 
 
 def _format_pipeline_summary(state: ETLState) -> str:
@@ -264,13 +264,13 @@ def _format_pipeline_summary(state: ETLState) -> str:
     # Format PR history
     pr_list = _format_pr_history(state["pr_history"])
     
-    return f"""# 🏗️ Multi-Layer Medallion Pipeline Complete
+    return f"""# Multi-Layer Medallion Pipeline Complete
 
-## 📊 Executive Summary
+## Executive Summary
 
 {state['executive_summary']}
 
-## ⏱️ Pipeline Overview
+## Pipeline Overview
 
 - **Duration**: {duration.total_seconds():.1f} seconds
 - **Layers Processed**: {', '.join([l.upper() for l in state['layers_completed']])}
@@ -278,23 +278,23 @@ def _format_pipeline_summary(state: ETLState) -> str:
 - **Overall Status**: {state['workflow_status']}
 - **LLM Used**: Databricks {os.getenv('DATABRICKS_MODEL_ENDPOINT')}
 
-## 📦 Layer Details
+## Layer Details
 
 {''.join(layer_summaries)}
 
-## 🔗 Pull Requests
+## Pull Requests
 
 {pr_list}
 
-## ⚠️ Errors (if any)
+## Errors (if any)
 
 {_format_errors(state['error_log'])}
 
-## 🎯 Next Steps
+## Next Steps
 
-{'✅ **All transformations executed successfully!** Data is available in all layers.' if not state['layers_remaining'] and not state['error_log'] else ''}
-{'⏳ **Action Required**: Review and merge PRs in order (Bronze → Silver → Gold)' if state['pr_history'] and any(not pr.get('merged', False) for pr in state['pr_history']) else ''}
-{'❌ **Attention Needed**: Review errors above and re-run failed layers' if state['error_log'] else ''}
+{'All transformations executed successfully! Data is available in all layers.' if not state['layers_remaining'] and not state['error_log'] else ''}
+{'Action Required: Review and merge PRs in order (Bronze -> Silver -> Gold)' if state['pr_history'] and any(not pr.get('merged', False) for pr in state['pr_history']) else ''}
+{'Attention Needed: Review errors above and re-run failed layers' if state['error_log'] else ''}
 
 ---
 *Generated by Medallion ETL Agentic System v3.0*
@@ -304,17 +304,16 @@ def _format_pipeline_summary(state: ETLState) -> str:
 
 def _format_layer_summary(layer: str, context: dict) -> str:
     """Format individual layer summary."""
-    icon = {"bronze": "📦", "silver": "🥈", "gold": "🥇"}.get(layer, "📊")
     
     return f"""
-### {icon} {layer.upper()} Layer
+### {layer.upper()} Layer
 
 - **Table**: `{context['table_name']}`
 - **Rows**: {context['row_count']:,}
 - **Columns**: {context['schema']['column_count']}
 - **Quality**: {context['data_quality_metrics'].get('completeness_ratio', 0)*100:.1f}% complete
 - **PR**: {context['pr_url']}
-- **Status**: {'✅ Merged & Executed' if context['pr_merged'] else '⏳ Awaiting Merge'}
+- **Status**: {'Merged & Executed' if context['pr_merged'] else 'Awaiting Merge'}
 """
 
 
@@ -325,7 +324,7 @@ def _format_pr_history(pr_history: list) -> str:
     
     lines = []
     for i, pr in enumerate(pr_history, 1):
-        status = "✅ Merged" if pr.get('merged', False) else "⏳ Pending"
+        status = "Merged" if pr.get('merged', False) else "Pending"
         quality = pr.get('quality_score', 0)
         lines.append(f"{i}. **{pr['layer'].upper()}** Layer - PR #{pr['pr_number']} ({status}, Quality: {quality}/100)")
         lines.append(f"   - URL: {pr['pr_url']}")
@@ -338,22 +337,22 @@ def _format_pr_history(pr_history: list) -> str:
 def _format_errors(errors: list) -> str:
     """Format error list."""
     if not errors:
-        return "✅ No errors encountered"
+        return "No errors encountered"
     
-    return "\n".join([f"- ❌ {err}" for err in errors])
+    return "\n".join([f"- {err}" for err in errors])
 
 
 if __name__ == "__main__":
     print("\n" + "="*70)
-    print("🏗️  MEDALLION ETL MCP SERVER v3.0")
+    print("MEDALLION ETL MCP SERVER v3.0")
     print("="*70)
-    print(f"✓ Using Databricks-hosted {os.getenv('DATABRICKS_MODEL_ENDPOINT')}")
-    print(f"✓ Workspace: {os.getenv('DATABRICKS_HOST')}")
-    print(f"✓ SQL Warehouse: {os.getenv('DATABRICKS_WAREHOUSE_ID')}")
-    print(f"✓ GitHub Repo: {os.getenv('GITHUB_REPO_OWNER')}/{os.getenv('GITHUB_REPO_NAME')}")
+    print(f"Using Databricks-hosted {os.getenv('DATABRICKS_MODEL_ENDPOINT')}")
+    print(f"Workspace: {os.getenv('DATABRICKS_HOST')}")
+    print(f"SQL Warehouse: {os.getenv('DATABRICKS_WAREHOUSE_ID')}")
+    print(f"GitHub Repo: {os.getenv('GITHUB_REPO_OWNER')}/{os.getenv('GITHUB_REPO_NAME')}")
     print("="*70)
-    print("📋 Loaded transformation rules from rules.txt")
-    print("🚀 Ready for VS Code Copilot integration")
+    print("Loaded transformation rules from rules.txt")
+    print("Ready for VS Code Copilot integration")
     print("="*70 + "\n")
     
     mcp.run()
