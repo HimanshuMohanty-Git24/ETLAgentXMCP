@@ -1,5 +1,5 @@
 """
-Code Generation Agent using Databricks-hosted Claude Sonnet 4.5.
+Code Generation Agent using Groq-hosted LLMs.
 
 Generates production-ready PySpark/SQL code for Medallion transformations
 using context from completed layers.
@@ -9,7 +9,7 @@ Date: 2025-11-14
 """
 
 import os
-from databricks_langchain import ChatDatabricks
+from groq_llm import groq_chat_complete
 from langchain_core.messages import HumanMessage, SystemMessage
 from state import ETLState
 import json
@@ -19,23 +19,14 @@ class CodeGenAgent:
     """
     Context-enriched code generation for each layer.
     
-    Uses Databricks-hosted Claude Sonnet 4.5 to generate SQL transformations
+    Uses Groq-hosted LLMs to generate SQL transformations
     based on actual schema and data from previous layers.
     """
     
     def __init__(self):
-        """Initialize CodeGenAgent with Databricks Foundation Model API."""
-        endpoint = os.getenv("DATABRICKS_MODEL_ENDPOINT", "databricks-claude-sonnet-4-5")
-        temperature = float(os.getenv("MODEL_TEMPERATURE", "0.2"))
-        max_tokens = int(os.getenv("MODEL_MAX_TOKENS", "4096"))
-        
-        self.llm = ChatDatabricks(
-            endpoint=endpoint,
-            temperature=temperature,  # Lower temperature for more deterministic code
-            max_tokens=max_tokens,
-        )
-        
-        print(f"CodeGenAgent initialized with {endpoint}")
+        """Initialize CodeGenAgent with Groq LLM."""
+        model = os.getenv("GROQ_MODEL_CODEGEN", "llama-3.1-8b-instant")
+        print(f"[OK] CodeGenAgent initialized with Groq model: {model}")
     
     async def __call__(self, state: ETLState) -> ETLState:
         """
@@ -120,17 +111,19 @@ Generate complete, executable SQL code now."""
         ]
         
         try:
-            # Call Databricks-hosted Claude Sonnet 4.5
-            response = await self.llm.ainvoke(messages)
+            # Call Groq LLM
+            content = await groq_chat_complete(
+                messages=messages,
+                model_env_key="GROQ_MODEL_CODEGEN",
+                default_model="llama-3.1-8b-instant",
+            )
             
             # Parse JSON response
-            code_data = json.loads(response.content)
+            code_data = json.loads(content)
             
             state["sql_queries"] = code_data.get("sql_queries", [])
             state["pyspark_code"] = code_data.get("pyspark_code", "")
             state["test_code"] = code_data.get("test_code", "")
-            
-            # Store target table
             state["current_table_output"] = target_table
             
             print(f"{current_layer.upper()} layer code generated ({len(state['sql_queries'])} queries)")
@@ -138,19 +131,18 @@ Generate complete, executable SQL code now."""
         except json.JSONDecodeError:
             # Fallback: extract SQL from markdown
             print(f"[WARNING] JSON parse failed, extracting SQL from markdown for {current_layer}")
-            content = response.content
+            content_text = content
             sql_queries = []
             
             # Look for fenced SQL code blocks and extract their contents
-            if "```" in content:
-                for block in content.split("```sql")[1:]:
-                    # take the portion up to the next closing fence
+            if "```" in content_text:
+                for block in content_text.split("```sql")[1:]:
                     query = block.split("```")[0]
                     if query and query.strip():
                         sql_queries.append(query.strip())
             
             state["sql_queries"] = sql_queries
-            state["pyspark_code"] = content
+            state["pyspark_code"] = content_text
             state["test_code"] = "# Tests to be generated manually"
             state["current_table_output"] = target_table
         

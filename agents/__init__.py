@@ -1,8 +1,9 @@
 """
 Agents package for Medallion ETL pipeline.
 
-All agents use Databricks-hosted Claude Sonnet 4.5 via Foundation Model API
-for intelligent planning, code generation, and review.
+All LLM-based agents use Groq-hosted models for intelligent planning,
+code generation, and review. Non-LLM agents handle execution, PR creation,
+and context enrichment using direct Databricks and GitHub APIs.
 """
 
 from .planner_agent import PlannerAgent

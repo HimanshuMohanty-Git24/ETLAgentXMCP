@@ -1,8 +1,8 @@
 """
 MCP Server for Multi-Layer Medallion ETL System.
 
-Uses Databricks-hosted Claude Sonnet 4.5 for all agents.
-Provides tools for VS Code Copilot integration.
+Uses Groq-hosted LLMs for all agents and Databricks SQL Warehouse
+for actual data transformations. Provides tools for VS Code Copilot.
 
 Author: Data Engineering Team
 Date: 2025-11-14
@@ -20,11 +20,11 @@ required_vars = [
     "DATABRICKS_HOST",
     "DATABRICKS_TOKEN",
     "DATABRICKS_WAREHOUSE_ID",
-    "DATABRICKS_MODEL_ENDPOINT",
     "GITHUB_TOKEN",
     "GITHUB_REPO_OWNER",
     "GITHUB_REPO_NAME",
-    "GIT_LOCAL_PATH"
+    "GIT_LOCAL_PATH",
+    "GROQ_API_KEY",
 ]
 
 missing_vars = [var for var in required_vars if not os.getenv(var)]
@@ -43,8 +43,8 @@ from typing import Optional
 
 # Initialize MCP server
 mcp = FastMCP(
-    name="Medallion ETL with Databricks Claude",
-    version="3.0.0"
+    name="Medallion ETL with Groq + Databricks",
+    version="3.1.0"
 )
 
 
@@ -138,14 +138,13 @@ async def run_full_medallion_pipeline(
     if ctx:
         await ctx.info(f"Starting full Medallion pipeline (Bronze -> Silver -> Gold)")
         await ctx.info(f"Source: {source_table}")
-        await ctx.info(f"LLM: Databricks {os.getenv('DATABRICKS_MODEL_ENDPOINT')}")
+        await ctx.info("LLM: Groq (see GROQ_MODEL_* env vars)")
     
     print("\n" + "="*70)
-    print("MEDALLION ETL PIPELINE STARTING")
+    print("MEDALLION ETL PIPELINE STARTING (Groq + Databricks)")
     print("="*70)
     print(f"Source: {source_table}")
     print(f"Request: {user_query}")
-    print(f"LLM: {os.getenv('DATABRICKS_MODEL_ENDPOINT')}")
     print("="*70 + "\n")
     
     # Execute multi-layer workflow
@@ -169,7 +168,7 @@ Error: {str(e)}
 Please check:
 - Databricks connectivity (DATABRICKS_HOST, DATABRICKS_TOKEN)
 - SQL Warehouse availability (DATABRICKS_WAREHOUSE_ID)
-- Foundation Model API access (DATABRICKS_MODEL_ENDPOINT)
+- Groq API key (GROQ_API_KEY) and model envs (GROQ_MODEL_*
 - GitHub credentials (GITHUB_TOKEN)
 
 See logs for detailed error information.
@@ -275,7 +274,7 @@ def _format_pipeline_summary(state: ETLState) -> str:
 - **Layers Processed**: {', '.join([l.upper() for l in state['layers_completed']])}
 - **Total PRs Created**: {len(state['pr_history'])}
 - **Overall Status**: {state['workflow_status']}
-- **LLM Used**: Databricks {os.getenv('DATABRICKS_MODEL_ENDPOINT')}
+- **LLM Used**: Groq (models: Planner={os.getenv('GROQ_MODEL_PLANNER', 'llama-3.3-70b-versatile')}, Codegen={os.getenv('GROQ_MODEL_CODEGEN', 'llama-3.1-8b-instant')}, Reviewer={os.getenv('GROQ_MODEL_REVIEWER', 'llama-3.3-70b-versatile')}, Summary={os.getenv('GROQ_MODEL_SUMMARY', 'llama-3.1-8b-instant')})
 
 ## Layer Details
 
@@ -343,9 +342,8 @@ def _format_errors(errors: list) -> str:
 
 if __name__ == "__main__":
     print("\n" + "="*70)
-    print("MEDALLION ETL MCP SERVER v3.0")
+    print("MEDALLION ETL MCP SERVER (Groq + Databricks)")
     print("="*70)
-    print(f"Using Databricks-hosted {os.getenv('DATABRICKS_MODEL_ENDPOINT')}")
     print(f"Workspace: {os.getenv('DATABRICKS_HOST')}")
     print(f"SQL Warehouse: {os.getenv('DATABRICKS_WAREHOUSE_ID')}")
     print(f"GitHub Repo: {os.getenv('GITHUB_REPO_OWNER')}/{os.getenv('GITHUB_REPO_NAME')}")
