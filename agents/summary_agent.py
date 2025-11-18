@@ -1,5 +1,5 @@
 """
-Summary Agent using Databricks-hosted Claude Sonnet 4.5.
+Summary Agent using Groq-hosted LLMs.
 
 Creates executive summaries of pipeline execution for business users.
 
@@ -8,7 +8,7 @@ Date: 2025-11-14
 """
 
 import os
-from databricks_langchain import ChatDatabricks
+from groq_llm import groq_chat_complete
 from langchain_core.messages import HumanMessage, SystemMessage
 from state import ETLState
 
@@ -17,23 +17,14 @@ class SummaryAgent:
     """
     Generates executive summaries for business stakeholders.
     
-    Uses Databricks-hosted Claude Sonnet 4.5 to create clear,
+    Uses Groq-hosted LLMs to create clear,
     non-technical summaries of pipeline execution results.
     """
     
     def __init__(self):
-        """Initialize SummaryAgent with Databricks Foundation Model API."""
-        endpoint = os.getenv("DATABRICKS_MODEL_ENDPOINT", "databricks-claude-sonnet-4-5")
-        temperature = float(os.getenv("MODEL_TEMPERATURE", "0.4"))  # Slightly higher for natural language
-        max_tokens = int(os.getenv("MODEL_MAX_TOKENS", "2048"))
-        
-        self.llm = ChatDatabricks(
-            endpoint=endpoint,
-            temperature=temperature,
-            max_tokens=max_tokens,
-        )
-        
-        print(f"SummaryAgent initialized with {endpoint}")
+        """Initialize SummaryAgent with Groq LLM."""
+        model = os.getenv("GROQ_MODEL_SUMMARY", "llama-3.1-8b-instant")
+        print(f"[OK] SummaryAgent initialized with Groq model: {model}")
     
     async def __call__(self, state: ETLState) -> ETLState:
         """
@@ -105,15 +96,19 @@ Create a professional executive summary suitable for business stakeholders."""
         ]
         
         try:
-            # Call Databricks-hosted Claude Sonnet 4.5
-            response = await self.llm.ainvoke(messages)
+            # Call Groq LLM
+            content = await groq_chat_complete(
+                messages=messages,
+                model_env_key="GROQ_MODEL_SUMMARY",
+                default_model="llama-3.1-8b-instant",
+            )
             
-            state["executive_summary"] = response.content
+            state["executive_summary"] = content
             
-            print(f"Executive summary generated")
+            print(f"[OK] Executive summary generated")
             
         except Exception as e:
-            print(f"Summary generation failed: {str(e)}")
+            print(f"[ERROR] Summary generation failed: {str(e)}")
             state["error_log"].append(f"Summary error: {str(e)}")
             state["executive_summary"] = f"""
 Pipeline execution completed for {state['user_query']}.

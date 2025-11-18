@@ -1,15 +1,15 @@
 """
-Planner Agent using Databricks-hosted Claude Sonnet 4.5.
+Planner Agent using Groq-hosted LLMs.
 
 This agent analyzes user requirements and creates detailed transformation plans
-using Databricks Foundation Model API for Claude Sonnet 4.5.
+using Groq API for intelligent planning based on enriched context from previous layers.
 
 Author: Data Engineering Team
 Date: 2025-11-14
 """
 
 import os
-from databricks_langchain import ChatDatabricks
+from groq_llm import groq_chat_complete
 from langchain_core.messages import HumanMessage, SystemMessage
 from state import ETLState
 from tools.context_tools import generate_transformation_recommendations
@@ -20,31 +20,20 @@ class PlannerAgent:
     """
     Context-aware planner for Medallion transformations.
     
-    Uses Databricks-hosted Claude Sonnet 4.5 via Foundation Model API
-    for intelligent planning based on enriched context from previous layers.
+    Uses Groq-hosted LLMs for intelligent planning based on enriched context
+    from previously completed layers.
     """
     
     def __init__(self):
         """
-        Initialize PlannerAgent with Databricks Foundation Model API.
+        Initialize PlannerAgent with Groq LLM.
         
-        The ChatDatabricks client automatically uses DATABRICKS_HOST and
-        DATABRICKS_TOKEN from environment variables for authentication.
+        Configuration is read from environment variables:
+        - GROQ_API_KEY: Groq API authentication
+        - GROQ_MODEL_PLANNER: Model to use (default: llama-3.3-70b-versatile)
         """
-        # Get configuration from environment
-        endpoint = os.getenv("DATABRICKS_MODEL_ENDPOINT", "databricks-claude-sonnet-4-5")
-        temperature = float(os.getenv("MODEL_TEMPERATURE", "0.3"))
-        max_tokens = int(os.getenv("MODEL_MAX_TOKENS", "4096"))
-        
-        # Initialize Databricks-hosted Claude Sonnet 4.5
-        self.llm = ChatDatabricks(
-            endpoint=endpoint,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            # Authentication is automatic via DATABRICKS_TOKEN env var
-        )
-        
-        print(f"PlannerAgent initialized with {endpoint}")
+        model = os.getenv("GROQ_MODEL_PLANNER", "llama-3.3-70b-versatile")
+        print(f"[OK] PlannerAgent initialized with Groq model: {model}")
     
     async def __call__(self, state: ETLState) -> ETLState:
         """
@@ -105,11 +94,15 @@ Create a detailed, context-aware transformation plan that builds on the actual d
         ]
         
         try:
-            # Call Databricks-hosted Claude Sonnet 4.5
-            response = await self.llm.ainvoke(messages)
+            # Call Groq LLM
+            content = await groq_chat_complete(
+                messages=messages,
+                model_env_key="GROQ_MODEL_PLANNER",
+                default_model="llama-3.3-70b-versatile",
+            )
             
             # Parse JSON response
-            plan_data = json.loads(response.content)
+            plan_data = json.loads(content)
             
             # Update state with plan
             state["transformation_plan"] = plan_data["transformation_plan"]
@@ -120,7 +113,7 @@ Create a detailed, context-aware transformation plan that builds on the actual d
         except json.JSONDecodeError:
             # Fallback if response is not valid JSON
             print(f"[WARNING] JSON parse failed, using raw response for {current_layer}")
-            state["transformation_plan"] = response.content
+            state["transformation_plan"] = content
             state["test_plan"] = "Generate comprehensive unit tests covering edge cases and data quality"
         
         except Exception as e:

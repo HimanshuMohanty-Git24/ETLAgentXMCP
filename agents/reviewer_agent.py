@@ -1,5 +1,5 @@
 """
-Code Review Agent using Databricks-hosted Claude Sonnet 4.5.
+Code Review Agent using Groq-hosted LLMs.
 
 Reviews generated code for quality, correctness, and best practices.
 
@@ -8,7 +8,7 @@ Date: 2025-11-14
 """
 
 import os
-from databricks_langchain import ChatDatabricks
+from groq_llm import groq_chat_complete
 from langchain_core.messages import HumanMessage, SystemMessage
 from state import ETLState
 from tools.databricks_tools import validate_sql_syntax
@@ -19,23 +19,14 @@ class ReviewerAgent:
     """
     Reviews generated code for quality and correctness.
     
-    Uses Databricks-hosted Claude Sonnet 4.5 for intelligent code review
+    Uses Groq-hosted LLMs for intelligent code review
     including syntax validation, security checks, and performance analysis.
     """
     
     def __init__(self):
-        """Initialize ReviewerAgent with Databricks Foundation Model API."""
-        endpoint = os.getenv("DATABRICKS_MODEL_ENDPOINT", "databricks-claude-sonnet-4-5")
-        temperature = float(os.getenv("MODEL_TEMPERATURE", "0.1"))  # Very low for deterministic review
-        max_tokens = int(os.getenv("MODEL_MAX_TOKENS", "4096"))
-        
-        self.llm = ChatDatabricks(
-            endpoint=endpoint,
-            temperature=temperature,
-            max_tokens=max_tokens,
-        )
-        
-        print(f"[OK] ReviewerAgent initialized with {endpoint}")
+        """Initialize ReviewerAgent with Groq LLM."""
+        model = os.getenv("GROQ_MODEL_REVIEWER", "llama-3.3-70b-versatile")
+        print(f"[OK] ReviewerAgent initialized with Groq model: {model}")
     
     async def __call__(self, state: ETLState) -> ETLState:
         """
@@ -113,11 +104,15 @@ Provide detailed review with approval decision."""
         ]
         
         try:
-            # Call Databricks-hosted Claude Sonnet 4.5
-            response = await self.llm.ainvoke(messages)
+            # Call Groq LLM
+            content = await groq_chat_complete(
+                messages=messages,
+                model_env_key="GROQ_MODEL_REVIEWER",
+                default_model="llama-3.3-70b-versatile",
+            )
             
             # Parse JSON response
-            review_data = json.loads(response.content)
+            review_data = json.loads(content)
             
             # Override status if syntax invalid
             if not syntax_valid:
@@ -133,13 +128,14 @@ Provide detailed review with approval decision."""
             
         except json.JSONDecodeError:
             # Fallback review
-            print(f"JSON parse failed, using fallback review for {current_layer}")
+            print(f"[WARNING] JSON parse failed, using fallback review for {current_layer}")
             state["review_status"] = "APPROVED" if syntax_valid else "NEEDS_REVISION"
             state["code_quality_score"] = 75.0 if syntax_valid else 50.0
             state["review_comments"] = ["Review completed with limited analysis"]
+            state["error_log"].append("ReviewerAgent: JSON parse failed")
         
         except Exception as e:
-            print(f"Review failed for {current_layer}: {str(e)}")
+            print(f"[ERROR] Review failed for {current_layer}: {str(e)}")
             state["error_log"].append(f"Review error: {str(e)}")
             state["review_status"] = "NEEDS_REVISION"
             state["code_quality_score"] = 0.0
