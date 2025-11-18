@@ -33,7 +33,7 @@ class SummaryAgent:
             max_tokens=max_tokens,
         )
         
-        print(f"✓ SummaryAgent initialized with {endpoint}")
+        print(f"SummaryAgent initialized with {endpoint}")
     
     async def __call__(self, state: ETLState) -> ETLState:
         """
@@ -110,10 +110,10 @@ Create a professional executive summary suitable for business stakeholders."""
             
             state["executive_summary"] = response.content
             
-            print(f"✓ Executive summary generated")
+            print(f"Executive summary generated")
             
         except Exception as e:
-            print(f"✗ Summary generation failed: {str(e)}")
+            print(f"Summary generation failed: {str(e)}")
             state["error_log"].append(f"Summary error: {str(e)}")
             state["executive_summary"] = f"""
 Pipeline execution completed for {state['user_query']}.

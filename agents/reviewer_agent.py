@@ -35,7 +35,7 @@ class ReviewerAgent:
             max_tokens=max_tokens,
         )
         
-        print(f"✓ ReviewerAgent initialized with {endpoint}")
+        print(f"[OK] ReviewerAgent initialized with {endpoint}")
     
     async def __call__(self, state: ETLState) -> ETLState:
         """
@@ -100,7 +100,7 @@ TEST CODE:
 {state['test_code']}
 
 SYNTAX VALIDATION RESULTS:
-{'✓ All queries passed syntax validation' if syntax_valid else f'✗ Syntax errors found:{chr(10)}{chr(10).join(syntax_errors)}'}
+{'All queries passed syntax validation' if syntax_valid else f'[ERROR] Syntax errors found:{chr(10)}{chr(10).join(syntax_errors)}'}
 
 TRANSFORMATION PLAN (for context):
 {state['transformation_plan'][:1000]}
@@ -129,17 +129,17 @@ Provide detailed review with approval decision."""
             state["code_quality_score"] = review_data["quality_score"]
             state["review_comments"] = review_data["comments"]
             
-            print(f"✓ {current_layer.upper()} code reviewed: {review_data['status']} (score: {review_data['quality_score']}/100)")
+            print(f"{current_layer.upper()} code reviewed: {review_data['status']} (score: {review_data['quality_score']}/100)")
             
         except json.JSONDecodeError:
             # Fallback review
-            print(f"⚠ JSON parse failed, using fallback review for {current_layer}")
+            print(f"JSON parse failed, using fallback review for {current_layer}")
             state["review_status"] = "APPROVED" if syntax_valid else "NEEDS_REVISION"
             state["code_quality_score"] = 75.0 if syntax_valid else 50.0
             state["review_comments"] = ["Review completed with limited analysis"]
         
         except Exception as e:
-            print(f"✗ Review failed for {current_layer}: {str(e)}")
+            print(f"Review failed for {current_layer}: {str(e)}")
             state["error_log"].append(f"Review error: {str(e)}")
             state["review_status"] = "NEEDS_REVISION"
             state["code_quality_score"] = 0.0

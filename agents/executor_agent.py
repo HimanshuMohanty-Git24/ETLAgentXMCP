@@ -28,7 +28,7 @@ class ExecutorAgent:
     
     def __init__(self):
         """Initialize Executor Agent."""
-        print("✓ ExecutorAgent initialized")
+        print("ExecutorAgent initialized")
     
     async def __call__(self, state: ETLState) -> ETLState:
         """
@@ -50,7 +50,7 @@ class ExecutorAgent:
         current_layer = state["current_layer"]
         
         # Check PR merge status
-        print(f"ℹ Checking PR #{state['current_pr_number']} merge status...")
+        print(f"Checking PR #{state['current_pr_number']} merge status...")
         
         pr_status = check_pr_status.invoke({"pr_number": state["current_pr_number"]})
         
@@ -59,14 +59,14 @@ class ExecutorAgent:
             state["execution_status"] = "awaiting_pr_merge"
             state["workflow_status"] = "awaiting_merge"
             
-            print(f"⏳ PR #{state['current_pr_number']} not merged yet. Execution paused.")
+            print(f"PR #{state['current_pr_number']} not merged yet. Execution paused.")
             print(f"   PR State: {pr_status.get('state', 'unknown')}")
             print(f"   URL: {pr_status.get('url', state['current_pr_url'])}")
             
             # In production, this would wait or trigger on webhook
             # For demo, we'll simulate waiting
-            print("   💡 In production: Webhook triggers execution after merge")
-            print("   💡 For testing: Manually merge PR and re-run")
+            print("In production: Webhook triggers execution after merge")
+            print("For testing: Manually merge PR and re-run")
             
             return state
         
@@ -74,7 +74,7 @@ class ExecutorAgent:
         state["pr_merged"] = True
         state["current_pr_merged"] = True
         
-        print(f"✓ PR #{state['current_pr_number']} merged! Executing transformation...")
+        print(f"PR #{state['current_pr_number']} merged! Executing transformation...")
         
         # Determine target table name
         catalog, schema, table = state["source_table"].split(".")
@@ -98,24 +98,24 @@ class ExecutorAgent:
             state["workflow_status"] = f"{current_layer}_executed"
             
             if result["status"] == "success":
-                print(f"✓ {current_layer.upper()} transformation executed successfully")
+                print(f"{current_layer.upper()} transformation executed successfully")
                 print(f"  Target: {target_table}")
                 print(f"  Rows: {result.get('rows_processed', 0):,}")
             else:
-                print(f"✗ {current_layer.upper()} transformation failed")
+                print(f"{current_layer.upper()} transformation failed")
                 state["error_log"].append(f"Execution failed: {result.get('error', 'Unknown error')}")
         
         except Exception as e:
             error_msg = f"Exception during {current_layer} execution: {str(e)}"
             state["execution_status"] = "failed"
             state["error_log"].append(error_msg)
-            print(f"✗ {error_msg}")
+            print(f"{error_msg}")
         
         return state
     
     def _execute_bronze(self, state: ETLState, target_table: str) -> dict:
         """Execute Bronze layer transformation."""
-        print("  📦 Creating Bronze layer...")
+        print("Creating Bronze layer...")
         
         return create_bronze_table.invoke({
             "source_table": state["source_table"],
@@ -125,7 +125,7 @@ class ExecutorAgent:
     
     def _execute_silver(self, state: ETLState, target_table: str) -> dict:
         """Execute Silver layer transformation."""
-        print("  🥈 Creating Silver layer...")
+        print("Creating Silver layer...")
         
         bronze = state.get("bronze_context")
         source_table = bronze["table_name"] if bronze else state["source_table"]
@@ -141,7 +141,7 @@ class ExecutorAgent:
     
     def _execute_gold(self, state: ETLState, target_table: str) -> dict:
         """Execute Gold layer transformation."""
-        print("  🥇 Creating Gold layer...")
+        print("Creating Gold layer...")
         
         silver = state.get("silver_context")
         source_table = silver["table_name"] if silver else state["source_table"]

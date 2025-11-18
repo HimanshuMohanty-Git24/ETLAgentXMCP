@@ -63,7 +63,7 @@ def create_bronze_table(
         if count_result["status"] == "success" and count_result["rows"]:
             total_rows = count_result["rows"][0][0]
         
-        print(f"[Bronze] ✓ Table created: {target_table} ({total_rows:,} rows)")
+        print(f"[Bronze] [OK] Table created: {target_table} ({total_rows:,} rows)")
         
         return {
             "status": "success",
@@ -147,9 +147,9 @@ def execute_silver_transformation(
         if quality_result["status"] == "success" and quality_result["rows"]:
             avg_quality = quality_result["rows"][0][0]
         
-        print(f"[Silver] ✓ Table created: {target_table} ({total_rows:,} rows)")
+        print(f"[Silver] [OK] Table created: {target_table} ({total_rows:,} rows)")
         if avg_quality:
-            print(f"[Silver] ✓ Average data quality score: {avg_quality:.2f}")
+            print(f"[Silver] [OK] Average data quality score: {avg_quality:.2f}")
         
         return {
             "status": "success",
@@ -222,7 +222,7 @@ def execute_gold_transformation(
         if count_result["status"] == "success" and count_result["rows"]:
             total_rows = count_result["rows"][0][0]
         
-        print(f"[Gold] ✓ Table created: {target_table} ({total_rows:,} rows)")
+        print(f"[Gold] [OK] Table created: {target_table} ({total_rows:,} rows)")
         
         return {
             "status": "success",
@@ -266,7 +266,7 @@ def optimize_table(table_name: str, zorder_columns: List[str] = None) -> Dict[st
         result = execute_sql_query(query=optimize_query, max_wait_seconds=600)
         
         if result["status"] == "success":
-            print(f"[Optimize] ✓ Table optimized: {table_name}")
+            print(f"[Optimize] [OK] Table optimized: {table_name}")
             return {
                 "status": "success",
                 "table_name": table_name,
@@ -305,7 +305,7 @@ def analyze_table(table_name: str) -> Dict[str, Any]:
         result = execute_sql_query(query=analyze_query, max_wait_seconds=300)
         
         if result["status"] == "success":
-            print(f"[Analyze] ✓ Statistics computed: {table_name}")
+            print(f"[Analyze] [OK] Statistics computed: {table_name}")
             return {
                 "status": "success",
                 "table_name": table_name,

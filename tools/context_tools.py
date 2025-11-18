@@ -84,7 +84,7 @@ def analyze_layer_output(
             columns=[col["name"] for col in schema_info["columns"]]
         )
         
-        print(f"[Context] ✓ Analysis complete: {total_rows:,} rows, {len(schema_info['columns'])} columns")
+        print(f"[Context] [OK] Analysis complete: {total_rows:,} rows, {len(schema_info['columns'])} columns")
         
         return {
             "status": "success",

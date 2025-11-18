@@ -35,7 +35,7 @@ class CodeGenAgent:
             max_tokens=max_tokens,
         )
         
-        print(f"✓ CodeGenAgent initialized with {endpoint}")
+        print(f"CodeGenAgent initialized with {endpoint}")
     
     async def __call__(self, state: ETLState) -> ETLState:
         """
@@ -133,11 +133,11 @@ Generate complete, executable SQL code now."""
             # Store target table
             state["current_table_output"] = target_table
             
-            print(f"✓ {current_layer.upper()} layer code generated ({len(state['sql_queries'])} queries)")
+            print(f"{current_layer.upper()} layer code generated ({len(state['sql_queries'])} queries)")
             
         except json.JSONDecodeError:
             # Fallback: extract SQL from markdown
-            print(f"⚠ JSON parse failed, extracting SQL from markdown for {current_layer}")
+            print(f"[WARNING] JSON parse failed, extracting SQL from markdown for {current_layer}")
             content = response.content
             sql_queries = []
             
@@ -155,7 +155,7 @@ Generate complete, executable SQL code now."""
             state["current_table_output"] = target_table
         
         except Exception as e:
-            print(f"✗ Code generation failed for {current_layer}: {str(e)}")
+            print(f"[ERROR] Code generation failed for {current_layer}: {str(e)}")
             state["error_log"].append(f"CodeGen error: {str(e)}")
             state["sql_queries"] = []
             state["pyspark_code"] = ""

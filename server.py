@@ -132,7 +132,7 @@ async def run_full_medallion_pipeline(
         with open("rules.txt", "r") as f:
             initial_state["transformation_rules"] = f.read()
     except FileNotFoundError:
-        print("⚠ rules.txt not found, using default rules")
+        print("[WARNING] rules.txt not found, using default rules")
         initial_state["transformation_rules"] = "# Default transformation rules"
     
     if ctx:

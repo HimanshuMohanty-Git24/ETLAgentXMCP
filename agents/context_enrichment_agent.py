@@ -29,7 +29,7 @@ class ContextEnrichmentAgent:
     
     def __init__(self):
         """Initialize Context Enrichment Agent."""
-        print("✓ ContextEnrichmentAgent initialized")
+        print("ContextEnrichmentAgent initialized")
     
     async def __call__(self, state: ETLState) -> ETLState:
         """
@@ -52,7 +52,7 @@ class ContextEnrichmentAgent:
         current_layer = state["current_layer"]
         output_table = state["current_table_output"]
         
-        print(f"📊 Analyzing {current_layer.upper()} layer output: {output_table}")
+        print(f"Analyzing {current_layer.upper()} layer output: {output_table}")
         
         # Deep analysis of completed layer
         analysis_result = analyze_layer_output.invoke({
@@ -79,13 +79,13 @@ class ContextEnrichmentAgent:
             # Store in appropriate context slot
             if current_layer == "bronze":
                 state["bronze_context"] = layer_context
-                print(f"  ✓ Bronze context captured: {layer_context['row_count']:,} rows, {layer_context['schema']['column_count']} columns")
+                print(f"Bronze context captured: {layer_context['row_count']:,} rows, {layer_context['schema']['column_count']} columns")
             elif current_layer == "silver":
                 state["silver_context"] = layer_context
-                print(f"  ✓ Silver context captured: {layer_context['row_count']:,} rows, {layer_context['data_quality_metrics']['completeness_ratio']*100:.1f}% complete")
+                print(f"Silver context captured: {layer_context['row_count']:,} rows, {layer_context['data_quality_metrics']['completeness_ratio']*100:.1f}% complete")
             elif current_layer == "gold":
                 state["gold_context"] = layer_context
-                print(f"  ✓ Gold context captured: {layer_context['row_count']:,} rows")
+                print(f"Gold context captured: {layer_context['row_count']:,} rows")
             
             # Mark layer as completed
             if current_layer not in state["layers_completed"]:
@@ -97,12 +97,12 @@ class ContextEnrichmentAgent:
             
             state["current_agent"] = "context_enrichment"
             
-            print(f"  ✓ Context enrichment complete for {current_layer.upper()}")
-            print(f"  ℹ Remaining layers: {', '.join(state['layers_remaining']) if state['layers_remaining'] else 'None'}")
+            print(f"Context enrichment complete for {current_layer.upper()}")
+            print(f"Remaining layers: {', '.join(state['layers_remaining']) if state['layers_remaining'] else 'None'}")
         
         else:
             error_msg = f"Context enrichment failed: {analysis_result.get('error', 'Unknown error')}"
             state["error_log"].append(error_msg)
-            print(f"  ✗ {error_msg}")
+            print(f"{error_msg}")
         
         return state

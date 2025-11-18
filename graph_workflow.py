@@ -95,7 +95,7 @@ def create_medallion_pipeline_graph():
         if state["review_status"] == "APPROVED":
             return "pr_creator"
         else:
-            print(f"⚠ Code not approved (status: {state['review_status']}), skipping to summary")
+            print(f"Code not approved (status: {state['review_status']}), skipping to summary")
             return "summary"
     
     graph.add_conditional_edges("reviewer", should_create_pr)
@@ -131,7 +131,7 @@ def create_medallion_pipeline_graph():
             state["current_layer"] = next_layer
             
             print(f"\n{'='*70}")
-            print(f"🔄 Moving to next layer: {next_layer.upper()}")
+            print(f"Moving to next layer: {next_layer.upper()}")
             print(f"   Completed: {', '.join(state['layers_completed'])}")
             print(f"   Remaining: {', '.join(state['layers_remaining'])}")
             print(f"{'='*70}\n")
@@ -140,8 +140,8 @@ def create_medallion_pipeline_graph():
         else:
             # All layers complete
             print(f"\n{'='*70}")
-            print(f"✓ All layers completed: {', '.join(state['layers_completed'])}")
-            print(f"📝 Generating executive summary...")
+            print(f"All layers completed: {', '.join(state['layers_completed'])}")
+            print(f"Generating executive summary...")
             print(f"{'='*70}\n")
             
             return "summary"  # Finish pipeline
@@ -157,8 +157,8 @@ def create_medallion_pipeline_graph():
     
     compiled_graph = graph.compile()
     
-    print("✓ Medallion pipeline graph compiled successfully")
-    print("  Flow: Planner → CodeGen → Reviewer → PR → Executor → Context → (loop or Summary)")
+    print("Medallion pipeline graph compiled successfully")
+    print("  Flow: Planner  CodeGen  Reviewer  PR  Executor  Context  (loop or Summary)")
     
     return compiled_graph
 

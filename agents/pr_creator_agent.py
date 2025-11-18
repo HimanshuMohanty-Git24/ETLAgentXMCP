@@ -23,7 +23,7 @@ class PRCreatorAgent:
     
     def __init__(self):
         """Initialize PR Creator Agent."""
-        print("✓ PRCreatorAgent initialized")
+        print("PRCreatorAgent initialized")
     
     async def __call__(self, state: ETLState) -> ETLState:
         """
@@ -45,7 +45,7 @@ class PRCreatorAgent:
         if state["review_status"] != "APPROVED":
             error_msg = f"Cannot create PR for {state['current_layer']}: Code not approved (status: {state['review_status']})"
             state["error_log"].append(error_msg)
-            print(f"✗ {error_msg}")
+            print(f"[ERROR] {error_msg}")
             return state
         
         current_layer = state["current_layer"]
@@ -60,25 +60,25 @@ class PRCreatorAgent:
         pr_plan = f"""
 ## {current_layer.upper()} Layer Transformation
 
-### 🎯 User Request
+### User Request
 {state['user_query']}
 
-### 📊 Layer Context
+### Layer Context
 {pr_context}
 
-### 📋 Transformation Plan
+### Transformation Plan
 {state['transformation_plan']}
 
-### ✅ Code Quality
+### Code Quality
 - **Review Status**: {state['review_status']}
 - **Quality Score**: {state['code_quality_score']}/100
-- **Tests**: {"✓ Included" if state['test_code'] else "✗ Missing"}
+- **Tests**: {"[OK] Included" if state['test_code'] else "[MISSING] Not included"}
 - **Layer**: {current_layer.upper()}
 
-### 🔗 Related PRs
+### Related PRs
 {self._format_related_prs(state)}
 
-### 📝 Review Checklist
+### Review Checklist
 - [ ] Code follows Databricks best practices
 - [ ] Delta Lake features properly configured
 - [ ] Tests cover edge cases and data quality
@@ -86,7 +86,7 @@ class PRCreatorAgent:
 - [ ] Proper error handling implemented
 - [ ] Performance optimizations in place
 
-### ⚠️ Execution Order
+### Execution Order
 This is part of a multi-layer Medallion pipeline. **Review carefully before merging.**
 After merge, the code will be executed automatically on Databricks.
 
@@ -120,17 +120,17 @@ After merge, the code will be executed automatically on Databricks.
                 
                 state["workflow_status"] = f"{current_layer}_pr_created"
                 
-                print(f"✓ PR #{pr_result['pr_number']} created for {current_layer.upper()} layer")
+                print(f"[OK] PR #{pr_result['pr_number']} created for {current_layer.upper()} layer")
                 print(f"  URL: {pr_result['pr_url']}")
             else:
                 error_msg = f"PR creation failed for {current_layer}: {pr_result.get('error', 'Unknown error')}"
                 state["error_log"].append(error_msg)
-                print(f"✗ {error_msg}")
+                print(f"[ERROR] {error_msg}")
         
         except Exception as e:
             error_msg = f"Exception creating PR for {current_layer}: {str(e)}"
             state["error_log"].append(error_msg)
-            print(f"✗ {error_msg}")
+            print(f"[ERROR] {error_msg}")
         
         state["current_agent"] = "pr_creator"
         
@@ -176,7 +176,7 @@ After merge, the code will be executed automatically on Databricks.
         
         lines = []
         for pr in state["pr_history"]:
-            status = "✓ Merged" if pr.get("merged", False) else "⏳ Pending"
+            status = "[OK] Merged" if pr.get("merged", False) else "[PENDING] Awaiting Merge"
             lines.append(f"- [{pr['layer'].upper()}] PR #{pr['pr_number']}: {status} - {pr['pr_url']}")
         
         return "\n".join(lines) if lines else "None"

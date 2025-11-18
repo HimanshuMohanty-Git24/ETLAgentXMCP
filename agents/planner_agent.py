@@ -44,7 +44,7 @@ class PlannerAgent:
             # Authentication is automatic via DATABRICKS_TOKEN env var
         )
         
-        print(f"✓ PlannerAgent initialized with {endpoint}")
+        print(f"PlannerAgent initialized with {endpoint}")
     
     async def __call__(self, state: ETLState) -> ETLState:
         """
@@ -115,16 +115,16 @@ Create a detailed, context-aware transformation plan that builds on the actual d
             state["transformation_plan"] = plan_data["transformation_plan"]
             state["test_plan"] = plan_data.get("test_plan", "Generate comprehensive unit tests")
             
-            print(f"✓ {current_layer.upper()} layer plan created")
+            print(f"[OK] {current_layer.upper()} layer plan created")
             
         except json.JSONDecodeError:
             # Fallback if response is not valid JSON
-            print(f"⚠ JSON parse failed, using raw response for {current_layer}")
+            print(f"[WARNING] JSON parse failed, using raw response for {current_layer}")
             state["transformation_plan"] = response.content
             state["test_plan"] = "Generate comprehensive unit tests covering edge cases and data quality"
         
         except Exception as e:
-            print(f"✗ Planning failed for {current_layer}: {str(e)}")
+            print(f"[ERROR] Planning failed for {current_layer}: {str(e)}")
             state["error_log"].append(f"Planning error: {str(e)}")
             state["transformation_plan"] = f"Error in planning: {str(e)}"
             state["test_plan"] = "Unable to generate test plan"
